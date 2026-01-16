@@ -14,7 +14,7 @@ This guide covers the complete setup, testing, and deployment of the EvolveFit f
 ## Pre-Deployment Checklist
 
 ### 1. Environment Configuration
-```bash
+\`\`\`bash
 # .env.production
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
@@ -22,7 +22,7 @@ SUPABASE_SERVICE_KEY=your_service_key
 GEMINI_API_KEY=your_gemini_key
 DATABASE_URL=your_database_url
 REDIS_URL=your_redis_url
-```
+\`\`\`
 
 ### 2. Database Setup
 - Run migration: `scripts/02-production-database-setup.sql`
@@ -32,12 +32,12 @@ REDIS_URL=your_redis_url
 
 ### 3. Testing
 Run the production test suite:
-```typescript
+\`\`\`typescript
 import { productionTestSuite } from '@/lib/testing-suite'
 
 const results = await productionTestSuite.runFullTestSuite()
 console.log(productionTestSuite.getReport())
-```
+\`\`\`
 
 ### 4. Performance Optimization
 - Enable caching: `Cache-Control: public, max-age=3600`
@@ -112,19 +112,19 @@ All features support seamless real-time synchronization across devices:
 ## Deployment Steps
 
 1. **Build**
-   ```bash
+   \`\`\`bash
    npm run build
-   ```
+   \`\`\`
 
 2. **Test**
-   ```bash
+   \`\`\`bash
    npm run test:production
-   ```
+   \`\`\`
 
 3. **Deploy to Vercel**
-   ```bash
+   \`\`\`bash
    vercel deploy --prod
-   ```
+   \`\`\`
 
 4. **Verify**
    - Check dashboard at /admin
