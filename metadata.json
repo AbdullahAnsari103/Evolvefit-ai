@@ -1,0 +1,8 @@
+{
+  "name": "EVOLVEFIT AI",
+  "description": "A production-grade, AI-powered fitness and nutrition platform designed for Indian users.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
