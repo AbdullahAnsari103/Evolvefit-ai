@@ -67,7 +67,12 @@ export const WorkoutPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
     }
 
     // Ensure valid YouTube URL format
-    let videoUrl = url.trim()
+    let videoUrl = url?.trim() || ""
+    if (!videoUrl) {
+      alert("No video tutorial available for this exercise. Please check back later.")
+      return
+    }
+
     if (!videoUrl.includes("http")) {
       videoUrl = `https://www.youtube.com/watch?v=${videoUrl}`
     }
@@ -137,7 +142,7 @@ export const WorkoutPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">
+            <span className="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-blue-500/20 shadow-lg shadow-blue-500/10">
               {user.goal} Protocol
             </span>
             <span className="bg-white/5 text-slate-300 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-white/10">
@@ -294,8 +299,27 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
       if (!data || !data.meals || data.meals.length === 0) {
         throw new Error("Invalid meal plan generated")
       }
-      setMealData(data)
-      setCached(STORAGE_KEYS.MEAL, data)
+      const processedData = {
+        ...data,
+        title: data.title || "Daily Meal Plan",
+        totalMacros: {
+          calories: data.totalCalories || 0,
+          protein: data.totalProtein || 0,
+          carbs: data.totalCarbs || 0,
+          fats: data.totalFats || 0,
+        },
+        meals: data.meals.map((meal: any) => ({
+          ...meal,
+          type: meal.type || "Meal",
+          name: meal.name || "Untitled Meal",
+          macros: meal.macros || { calories: 0, protein: 0, carbs: 0, fats: 0 },
+          ingredients: meal.ingredients || [],
+          instructions: meal.instructions || "No instructions available",
+          prepTime: meal.prepTime || "15 mins",
+        })),
+      }
+      setMealData(processedData)
+      setCached(STORAGE_KEYS.MEAL, processedData)
       setExpandedMeal(null)
     } catch (e) {
       console.error(e)
@@ -354,6 +378,13 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
     )
   }
 
+  const totalMacros = mealData.totalMacros || {
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fats: 0,
+  }
+
   return (
     <div className="animate-in slide-in-from-bottom duration-500 pb-20">
       {/* Top Summary Card */}
@@ -371,7 +402,7 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
               </span>
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-white italic tracking-tight leading-none mb-2">
-              {mealData.title}
+              {mealData.title || "Daily Meal Plan"}
             </h1>
             <p className="text-slate-400 max-w-xl text-sm leading-relaxed">
               A perfectly balanced nutrition strategy using simple, locally available ingredients. Optimized for{" "}
@@ -395,13 +426,13 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
             <div className="flex gap-4 md:gap-8 bg-black/40 p-4 md:p-6 rounded-3xl border border-white/5 backdrop-blur-md">
               <div className="text-center">
                 <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider mb-1">Calories</p>
-                <p className="text-white font-black text-3xl">{mealData.totalMacros.calories}</p>
+                <p className="text-white font-black text-3xl">{totalMacros.calories}</p>
               </div>
               <div className="w-px bg-white/10"></div>
               <div className="text-center">
                 <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider mb-1">Protein</p>
                 <p className="text-blue-400 font-black text-3xl">
-                  {mealData.totalMacros.protein}
+                  {totalMacros.protein}
                   <span className="text-sm text-slate-500 font-medium">g</span>
                 </p>
               </div>
@@ -409,7 +440,7 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
               <div className="text-center">
                 <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider mb-1">Carbs</p>
                 <p className="text-green-400 font-black text-3xl">
-                  {mealData.totalMacros.carbs}
+                  {totalMacros.carbs}
                   <span className="text-sm text-slate-500 font-medium">g</span>
                 </p>
               </div>
@@ -417,7 +448,7 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
               <div className="text-center">
                 <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider mb-1">Fats</p>
                 <p className="text-yellow-400 font-black text-3xl">
-                  {mealData.totalMacros.fats}
+                  {totalMacros.fats}
                   <span className="text-sm text-slate-500 font-medium">g</span>
                 </p>
               </div>
@@ -452,18 +483,20 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 rounded-2xl bg-dark-900 border border-white/5 flex items-center justify-center text-3xl shadow-inner">
-                        {meal.type.includes("Breakfast")
+                        {(meal.type || "").toLowerCase().includes("breakfast")
                           ? "🍳"
-                          : meal.type.includes("Lunch")
+                          : (meal.type || "").toLowerCase().includes("lunch")
                             ? "🍛"
-                            : meal.type.includes("Dinner")
+                            : (meal.type || "").toLowerCase().includes("dinner")
                               ? "🥘"
-                              : "🥣"}
+                              : (meal.type || "").toLowerCase().includes("snack")
+                                ? "🥜"
+                                : "🥣"}
                       </div>
                       <div>
                         <div className="flex items-center gap-3 mb-1">
                           <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                            {meal.type}
+                            {meal.type?.toUpperCase() || "MEAL"}
                           </span>
                           <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
                           <span className="text-[10px] font-bold text-orange-500">{meal.prepTime || "15 mins"}</span>
@@ -471,7 +504,7 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
                         <h3
                           className={`text-2xl font-bold transition-colors ${isExpanded ? "text-orange-400" : "text-white"}`}
                         >
-                          {meal.name}
+                          {meal.name || "Meal"}
                         </h3>
                       </div>
                     </div>
@@ -479,20 +512,24 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
                     <div className="flex items-center gap-4 md:gap-8 w-full md:w-auto bg-black/20 p-3 rounded-2xl border border-white/5">
                       <div className="text-center px-2">
                         <span className="block text-[10px] uppercase font-bold text-slate-500">Cals</span>
-                        <span className="text-lg font-black text-white">{meal.macros.calories}</span>
+                        <span className="text-lg font-black text-white">{meal.macros?.calories || 0}</span>
                       </div>
+                      <div className="w-px bg-white/10"></div>
                       <div className="text-center px-2 border-l border-white/10">
                         <span className="block text-[10px] uppercase font-bold text-slate-500">Pro</span>
-                        <span className="text-lg font-black text-blue-400">{meal.macros.protein}g</span>
+                        <span className="text-lg font-black text-blue-400">{meal.macros?.protein || 0}g</span>
                       </div>
+                      <div className="w-px bg-white/10"></div>
                       <div className="text-center px-2 border-l border-white/10">
                         <span className="block text-[10px] uppercase font-bold text-slate-500">Carb</span>
-                        <span className="text-lg font-black text-green-400">{meal.macros.carbs}g</span>
+                        <span className="text-lg font-black text-green-400">{meal.macros?.carbs || 0}g</span>
                       </div>
+                      <div className="w-px bg-white/10"></div>
                       <div className="text-center px-2 border-l border-white/10">
                         <span className="block text-[10px] uppercase font-bold text-slate-500">Fat</span>
-                        <span className="text-lg font-black text-yellow-400">{meal.macros.fats}g</span>
+                        <span className="text-lg font-black text-yellow-400">{meal.macros?.fats || 0}g</span>
                       </div>
+
                       <div
                         className={`ml-2 transition-transform duration-300 text-slate-400 ${isExpanded ? "rotate-180" : ""}`}
                       >
@@ -523,7 +560,7 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
                       </h4>
                       <div className="space-y-3">
                         {/* If ingredients is object (new format) vs string (old format fallback) */}
-                        {meal.ingredients.map((ing: any, i) =>
+                        {(meal.ingredients || []).map((ing: any, i) =>
                           typeof ing === "string" ? (
                             <div key={i} className="text-slate-300 text-sm bg-white/5 p-3 rounded-xl">
                               {ing}
@@ -534,55 +571,57 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
                               className="bg-dark-900 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-colors"
                             >
                               <div className="flex justify-between items-start mb-3">
-                                <span className="text-white font-bold text-sm">{ing.name}</span>
+                                <span className="text-white font-bold text-sm">{ing.name || "Ingredient"}</span>
                                 <span className="text-slate-400 text-xs font-medium bg-white/5 px-2 py-1 rounded-lg border border-white/5">
-                                  {ing.amount}
+                                  {ing.amount || ""}
                                 </span>
                               </div>
                               {/* Micro Macros */}
-                              <div className="grid grid-cols-3 gap-3">
-                                {/* Protein */}
-                                <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                                  <div className="flex justify-between items-end mb-1">
-                                    <span className="text-[10px] font-black text-blue-500 uppercase">Pro</span>
-                                    <span className="text-xs font-bold text-white">{ing.macros.protein}g</span>
+                              {ing.macros && (
+                                <div className="grid grid-cols-3 gap-3">
+                                  {/* Protein */}
+                                  <div className="bg-black/20 rounded-lg p-2 border border-white/5">
+                                    <div className="flex justify-between items-end mb-1">
+                                      <span className="text-[10px] font-black text-blue-500 uppercase">Pro</span>
+                                      <span className="text-xs font-bold text-white">{ing.macros.protein || 0}g</span>
+                                    </div>
+                                    <div className="h-1 bg-dark-700 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-blue-500"
+                                        style={{ width: `${Math.min(((ing.macros.protein || 0) / 30) * 100, 100)}%` }}
+                                      ></div>
+                                    </div>
                                   </div>
-                                  <div className="h-1 bg-dark-700 rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-blue-500"
-                                      style={{ width: `${Math.min((ing.macros.protein / 30) * 100, 100)}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
 
-                                {/* Carbs */}
-                                <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                                  <div className="flex justify-between items-end mb-1">
-                                    <span className="text-[10px] font-black text-green-500 uppercase">Carb</span>
-                                    <span className="text-xs font-bold text-white">{ing.macros.carbs}g</span>
+                                  {/* Carbs */}
+                                  <div className="bg-black/20 rounded-lg p-2 border border-white/5">
+                                    <div className="flex justify-between items-end mb-1">
+                                      <span className="text-[10px] font-black text-green-500 uppercase">Carb</span>
+                                      <span className="text-xs font-bold text-white">{ing.macros.carbs || 0}g</span>
+                                    </div>
+                                    <div className="h-1 bg-dark-700 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-green-500"
+                                        style={{ width: `${Math.min(((ing.macros.carbs || 0) / 50) * 100, 100)}%` }}
+                                      ></div>
+                                    </div>
                                   </div>
-                                  <div className="h-1 bg-dark-700 rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-green-500"
-                                      style={{ width: `${Math.min((ing.macros.carbs / 50) * 100, 100)}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
 
-                                {/* Fats */}
-                                <div className="bg-black/20 rounded-lg p-2 border border-white/5">
-                                  <div className="flex justify-between items-end mb-1">
-                                    <span className="text-[10px] font-black text-yellow-500 uppercase">Fat</span>
-                                    <span className="text-xs font-bold text-white">{ing.macros.fats}g</span>
-                                  </div>
-                                  <div className="h-1 bg-dark-700 rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-yellow-500"
-                                      style={{ width: `${Math.min((ing.macros.fats / 20) * 100, 100)}%` }}
-                                    ></div>
+                                  {/* Fats */}
+                                  <div className="bg-black/20 rounded-lg p-2 border border-white/5">
+                                    <div className="flex justify-between items-end mb-1">
+                                      <span className="text-[10px] font-black text-yellow-500 uppercase">Fat</span>
+                                      <span className="text-xs font-bold text-white">{ing.macros.fats || 0}g</span>
+                                    </div>
+                                    <div className="h-1 bg-dark-700 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-yellow-500"
+                                        style={{ width: `${Math.min(((ing.macros.fats || 0) / 20) * 100, 100)}%` }}
+                                      ></div>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
+                              )}
                             </div>
                           ),
                         )}
@@ -595,7 +634,7 @@ export const MealPlanPage: React.FC<{ user: UserProfile }> = ({ user }) => {
                         <span className="text-lg">👨‍🍳</span> Preparation
                       </h4>
                       <div className="bg-dark-900 border border-white/5 rounded-2xl p-6 leading-relaxed text-slate-300 text-sm font-light">
-                        {meal.instructions}
+                        {meal.instructions || "No instructions available"}
                       </div>
 
                       <div className="mt-6 bg-blue-900/10 border border-blue-500/20 rounded-2xl p-4 flex gap-4 items-start">

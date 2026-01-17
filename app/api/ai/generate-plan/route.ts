@@ -77,24 +77,40 @@ REQUIREMENTS:
 Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure:
 {
   "dayName": "Day 1",
+  "title": "Daily Meal Plan",
   "totalCalories": 2000,
   "totalProtein": 150,
   "totalCarbs": 200,
   "totalFats": 65,
   "meals": [
     {
-      "mealName": "Breakfast",
+      "type": "Breakfast",
+      "name": "Idli with Sambar",
       "time": "8:00 AM",
-      "items": [
+      "prepTime": "20 mins",
+      "calories": 300,
+      "protein": 15,
+      "carbs": 40,
+      "fats": 8,
+      "macros": {
+        "calories": 300,
+        "protein": 15,
+        "carbs": 40,
+        "fats": 8
+      },
+      "ingredients": [
         {
-          "name": "Dish Name",
-          "quantity": "1 cup",
-          "calories": 300,
-          "protein": 15,
-          "carbs": 40,
-          "fats": 8
+          "name": "Idli",
+          "amount": "2 pieces",
+          "macros": {"protein": 8, "carbs": 25, "fats": 2}
+        },
+        {
+          "name": "Sambar",
+          "amount": "1 bowl",
+          "macros": {"protein": 7, "carbs": 15, "fats": 6}
         }
-      ]
+      ],
+      "instructions": "Steam idlis for 10 minutes. Serve with warm sambar."
     }
   ]
 }`
